@@ -14,6 +14,12 @@ from tensorflow.keras.layers import BatchNormalization, Activation, SeparableCon
 from tensorflow.keras.optimizers import Adam
 # Loss Function
 from tensorflow.keras.losses import mean_squared_error
+# Load Model From Saved File
+from tensorflow.keras.models import load_model
+# For Showing Result
+import cv2
+# For Chosing Random Number
+from random import randint
 
 TRAINING_FILE = 'dataset/training.csv'
 TESTING_FILE = 'dataset/test.csv'
@@ -105,6 +111,10 @@ def get_training_data():
 
 
 def start_traing(x_train, y_train):
+    """
+    Create & Train model
+    """
+    # Create Model
     model = Sequential([
         # 2D Convolution Layer with 96x96 input 128 filters & 5x5 window size
         SeparableConv2D(128, 5, input_shape=(96, 96, 1)),
@@ -153,6 +163,9 @@ def start_traing(x_train, y_train):
 
 
 def fetch_testing_data():
+    """
+    Load Testing data and save it to a dump file
+    """
     if not os.path.isfile(TESTING_FILE):
         print('Testing File Not Exists')
         exit()
@@ -190,6 +203,41 @@ def get_testing_data():
     return images
 
 
+def show_predection(images, num):
+    """
+    Show Prediction of trained model.
+    images -> list of images
+    num -> numer to be shown
+    """
+
+    model = load_model(SAVED_MODEL)
+    model.summary()
+    for i in range(1, num + 1):
+        x = randint(0, len(images))
+        # Normalize image
+        img = images[x].astype('float64').reshape(-1, 96, 96, 1)
+        img = img / 255
+        # Prediction
+        pred = (model.predict([img])*96).astype('int32')
+        # Extract the output from prediction into [x y] format
+        points = np.reshape(pred[0, 0, 0], (15, 2))
+        # Change Grayscale to RGB
+        rgb = np.stack((images[x],)*3, -1).astype('uint8')
+
+        # Draw circle on the features
+        for point in points:
+            cv2.circle(rgb, (point[0], point[1]), 2, (255, 0, 0), -1)
+
+        # Scale Up Image Just For better visiblity 96*2 => 192
+        rgb = cv2.resize(rgb, (192, 192))
+
+        # Show Image
+        cv2.imshow('Image ' + str(i), rgb)
+
+    # Wait For any Key
+    cv2.waitKey(0)
+
+
 x_train, y_train = get_training_data()
 
 print('Training Input', x_train.shape)
@@ -203,4 +251,4 @@ images = get_testing_data()
 if len(images) == 0:
     print('No Images Are found')
 else:
-    print(len(images))
+    show_predection(images, 5)
