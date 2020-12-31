@@ -24,7 +24,7 @@ EXTRACT_TRAIN_IN_FILE = 'saved/extracted_train_input.dmp'
 
 def fetch_training_data():
     """
-    Function Reads the Training File and extract information and saves it to a dump
+    Function Reads the Training File and extract information and saves it to a dump.
     """
     headers = []
     train_output = []
@@ -85,5 +85,19 @@ def get_training_data():
     if not os.path.isfile(EXTRACT_TRAIN_OUT_FILE) and not os.path.isfile(EXTRACT_TRAIN_IN_FILE):
         fetch_training_data()
 
+    with open(EXTRACT_TRAIN_IN_FILE, 'rb') as fin:
+        train_input = pickle.load(fin)
 
-get_training_data()
+    with open(EXTRACT_TRAIN_OUT_FILE, 'rb') as fin:
+        train_output = pickle.load(fin)
+
+    if isinstance(train_output, list) or isinstance(train_output, list):
+        print('Something Went Wrong')
+        exit()
+    return (train_input, train_output)
+
+
+x_train, y_train = get_training_data()
+
+print('Training Input', x_train.shape)
+print('Training Output', y_train.shape)
