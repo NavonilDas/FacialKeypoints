@@ -179,8 +179,15 @@ def fetch_testing_data():
 
 
 def get_testing_data():
-    fetch_testing_data()
-    pass
+    """
+    Load Testing Data From Dump or else from the testing file.
+    """
+    if not os.path.isfile(EXTRACT_TEST_FILE):
+        fetch_testing_data()
+    images = []
+    with open(EXTRACT_TEST_FILE, 'rb') as fin:
+        images = pickle.load(fin)
+    return images
 
 
 x_train, y_train = get_training_data()
@@ -191,4 +198,9 @@ print('Training Output', y_train.shape)
 if not os.path.isfile(SAVED_MODEL):
     start_traing(x_train, y_train)
 
-get_testing_data()
+images = get_testing_data()
+
+if len(images) == 0:
+    print('No Images Are found')
+else:
+    print(len(images))
