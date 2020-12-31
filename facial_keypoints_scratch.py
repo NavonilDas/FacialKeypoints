@@ -23,6 +23,9 @@ EXTRACT_TRAIN_IN_FILE = 'saved/extracted_train_input.dmp'
 
 SAVED_MODEL = 'saved/facial_keypoints_scratch_model.h5'
 
+EXTRACT_TEST_FILE = 'saved/extracted_images.dmp'
+
+
 def fetch_training_data():
     """
     Function Reads the Training File and extract information and saves it to a dump.
@@ -143,10 +146,41 @@ def start_traing(x_train, y_train):
 
     # Train the model
     model.fit(x=x_train, y=y_train, epochs=25,
-          batch_size=50)
+              batch_size=50)
 
     # Save The Model
     model.save(SAVED_MODEL)
+
+
+def fetch_testing_data():
+    if not os.path.isfile(TESTING_FILE):
+        print('Testing File Not Exists')
+        exit()
+
+    images = []
+
+    # Read testing File
+    with open(TESTING_FILE, 'r') as fin:
+        reader = csv.reader(fin)
+        # Skip Header
+        reader.__next__()
+
+        for row in reader:
+            img = row[1].split(' ')
+            img = [int(x) for x in img]
+            # Conver from 1D to 2D
+            img = np.array(img).astype('uint8').reshape(96, 96)
+            images.append(img)
+
+    # NOTE: We are not normalizing image as we need to plot it.
+    # Save all The images
+    with open(EXTRACT_TEST_FILE, 'wb') as fout:
+        pickle.dump(images, fout)
+
+
+def get_testing_data():
+    fetch_testing_data()
+    pass
 
 
 x_train, y_train = get_training_data()
@@ -156,5 +190,5 @@ print('Training Output', y_train.shape)
 
 if not os.path.isfile(SAVED_MODEL):
     start_traing(x_train, y_train)
-else:
-    pass
+
+get_testing_data()
