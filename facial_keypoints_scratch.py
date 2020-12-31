@@ -21,6 +21,7 @@ TESTING_FILE = 'dataset/test.csv'
 EXTRACT_TRAIN_OUT_FILE = 'saved/extracted_train_output.dmp'
 EXTRACT_TRAIN_IN_FILE = 'saved/extracted_train_input.dmp'
 
+SAVED_MODEL = 'saved/facial_keypoints_scratch_model.h5'
 
 def fetch_training_data():
     """
@@ -80,6 +81,9 @@ def fetch_training_data():
 
 
 def get_training_data():
+    """
+    Load Training Data From Saved Dump otherwise get training data from csv.
+    """
     train_output = []
     train_input = []
     if not os.path.isfile(EXTRACT_TRAIN_OUT_FILE) and not os.path.isfile(EXTRACT_TRAIN_IN_FILE):
@@ -97,7 +101,60 @@ def get_training_data():
     return (train_input, train_output)
 
 
+def start_traing(x_train, y_train):
+    model = Sequential([
+        # 2D Convolution Layer with 96x96 input 128 filters & 5x5 window size
+        SeparableConv2D(128, 5, input_shape=(96, 96, 1)),
+        # Apply Normalization
+        BatchNormalization(),
+        # Apply Activation Function
+        Activation('relu'),
+
+        # Another Convolution Layer of 128 Filters & 3x3 window size with 2 strides
+        SeparableConv2D(128, 3, strides=2, activation='relu'),
+        BatchNormalization(),
+
+        SeparableConv2D(128, 3, activation='relu'),
+        SeparableConv2D(128, 3, activation='relu'),
+        BatchNormalization(),
+
+        SeparableConv2D(128, 3, activation='relu'),
+        SeparableConv2D(128, 3, activation='relu'),
+        BatchNormalization(),
+
+        SeparableConv2D(64, 3, activation='relu'),
+        SeparableConv2D(64, 3, activation='relu'),
+        BatchNormalization(),
+
+        SeparableConv2D(32, 3, activation='relu'),
+        SeparableConv2D(32, 3, activation='relu'),
+        BatchNormalization(),
+
+        SeparableConv2D(30, 3, activation='relu'),
+        # Output Layer
+        SeparableConv2D(30, 3, activation='sigmoid'),
+    ])
+
+    # Print Summary of the model
+    model.summary()
+    # Compile Model with mean squared loss and adam optimizer
+    model.compile(loss=mean_squared_error,
+                  optimizer=Adam(learning_rate=0.0001), metrics=['mse'])
+
+    # Train the model
+    model.fit(x=x_train, y=y_train, epochs=25,
+          batch_size=50)
+
+    # Save The Model
+    model.save(SAVED_MODEL)
+
+
 x_train, y_train = get_training_data()
 
 print('Training Input', x_train.shape)
 print('Training Output', y_train.shape)
+
+if not os.path.isfile(SAVED_MODEL):
+    start_traing(x_train, y_train)
+else:
+    pass
